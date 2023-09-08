@@ -97,6 +97,21 @@ resource hwf_public 'Microsoft.App/containerApps@2023-05-01' = {
       ingress: {
         external: true
         targetPort: 3000
+
+        ipSecurityRestrictions: [
+          {
+            action: 'Allow'
+            description: 'petr_home'
+            ipAddressRange: '88.97.40.133/32'
+            name: 'petr_home'
+          }
+          {
+            action: 'Allow'
+            description: 'tim_home'
+            ipAddressRange: '82.9.48.2/32'
+            name: 'timj_home'
+          }
+        ]
       }
 
       registries: [
@@ -205,7 +220,7 @@ resource hwf_public 'Microsoft.App/containerApps@2023-05-01' = {
             }
             {
               name: 'AZURE_APP_INSIGHTS_INSTRUMENTATION_KEY'
-              value: 'hwf-public-appinsights-key'
+              secretRef: 'hwf-public-appinsights-key'
             }
             {
               name: 'RAILS_ENV'
