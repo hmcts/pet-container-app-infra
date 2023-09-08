@@ -9,6 +9,9 @@ param publicSubmissionUrl string
 param dwpApiProxyUrl string
 param laaBenefitCheckerUrl string
 
+param serviceNowEmail string
+param benefitApiPath string
+
 var subnetId = '/subscriptions/58a2ce36-4e09-467b-8330-d164aa559c68/resourceGroups/pet_${env}_network_resource_group/providers/Microsoft.Network/virtualNetworks/pet_${env}_network/subnets/pet_dmz_${env}'
 
 resource uami 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
@@ -267,6 +270,14 @@ resource hwf_public 'Microsoft.App/containerApps@2023-05-01' = {
               secretRef: 'hwf-public-zendesk-token'
             }
             {
+              name: 'RAILS_LOG_TO_STDOUT'
+              value: 'true'
+            }
+            {
+              name: 'LOG_LEVEL'
+              value: 'info'
+            }
+            {
               name: 'SMTP_USERNAME'
               secretRef: 'hwf-public-smtp-username'
             }
@@ -327,20 +338,27 @@ resource hwf_staff 'Microsoft.App/containerApps@2023-05-01' = {
         external: true
         targetPort: 3000
 
-        ipSecurityRestrictions: [
-          {
-            action: 'Allow'
-            description: 'petr_home'
-            ipAddressRange: '88.97.40.133/32'
-            name: 'petr_home'
-          }
-          {
-            action: 'Allow'
-            description: 'tim_home'
-            ipAddressRange: '82.9.48.2/32'
-            name: 'timj_home'
-          }
-        ]
+        // TODO see why this doesn't work for other apps to talk to it
+        // ipSecurityRestrictions: [
+        //   {
+        //     action: 'Allow'
+        //     description: 'petr_home'
+        //     ipAddressRange: '88.97.40.133/32'
+        //     name: 'petr_home'
+        //   }
+        //   {
+        //     action: 'Allow'
+        //     description: 'tim_home'
+        //     ipAddressRange: '82.9.48.2/32'
+        //     name: 'timj_home'
+        //   }
+        //   {
+        //     action: 'Allow'
+        //     description: 'public app'
+        //     ipAddressRange: '51.11.62.203/32'
+        //     name: 'environment_outbound_ip'
+        //   }
+        // ]
       }
 
       registries: [
@@ -504,7 +522,6 @@ resource hwf_staff 'Microsoft.App/containerApps@2023-05-01' = {
             {
               name: 'RAILS_LOG_TO_STDOUT'
               value: 'true'
-
             }
             {
               name: 'LOG_LEVEL'
@@ -652,57 +669,6 @@ resource hwf_staff 'Microsoft.App/containerApps@2023-05-01' = {
 
 }
 
-resource hwf_laa_benefit_checker 'Microsoft.App/containerApps@2023-05-01' = {
-  name: 'hwf-laa-benefit-checker-${env}'
-  location: location
-
-  identity: {
-    type: 'UserAssigned'
-    userAssignedIdentities: {
-      '${uami.id}': {}
-    }
-  }
-  properties: {
-    managedEnvironmentId: environment.id
-
-    configuration: {
-      ingress: {
-        external: true
-        targetPort: 8080
-      }
-
-      registries: [
-        {
-          identity: uami.id
-          server: 'employmenttribunal.azurecr.io'
-
-        }
-      ]
-    }
-
-    template: {
-      containers: [
-        {
-          image: 'employmenttribunal.azurecr.io/hwf-laa-benefit-checker:0.0'
-          name: 'hwf-laa-benefit-checker'
-          resources: {
-            cpu: '0.5'
-            memory: '1.0Gi'
-          }
-        }
-      ]
-      scale: {
-        minReplicas: 1
-        maxReplicas: 1
-      }
-
-    }
-  }
-
-  dependsOn: [ acrPull ]
-
-}
-
 resource hwf_benefit_checker_api 'Microsoft.App/containerApps@2023-05-01' = {
   name: 'hwf-benefit-checker-api-${env}'
   location: location
@@ -757,7 +723,7 @@ resource hwf_benefit_checker_api 'Microsoft.App/containerApps@2023-05-01' = {
     template: {
       containers: [
         {
-          image: 'employmenttribunal.azurecr.io/hwf-benefit-checker-api:master-63c4486'
+          image: 'employmenttribunal.azurecr.io/hwf-benefit-checker-api:v2.3.2'
           name: 'hwf-benefit-checker-api'
           resources: {
             cpu: '0.5'
@@ -778,7 +744,7 @@ resource hwf_benefit_checker_api 'Microsoft.App/containerApps@2023-05-01' = {
             }
             {
               name: 'SERVICE_NOW_EMAIL'
-              value: 'DCD-HWFSupportServiceDeskDEV@HMCTS.NET'
+              value: serviceNowEmail
             }
             {
               name: 'API_XMLNS'
@@ -790,7 +756,7 @@ resource hwf_benefit_checker_api 'Microsoft.App/containerApps@2023-05-01' = {
             }
             {
               name: 'API_PATH'
-              value: '/bc-DS_Dev/lsc-services/benefitChecker'
+              value: benefitApiPath
             }
             {
               name: 'API_ORG_ID'
