@@ -37,7 +37,7 @@ resource hwf_staff 'Microsoft.App/containerApps@2023-05-01' = {
             }
         ] : null
 
-        ipSecurityRestrictions: external ? [
+        ipSecurityRestrictions: env == 'prod' && external ? [
           {
             action: 'Allow'
             description: 'petr_home'

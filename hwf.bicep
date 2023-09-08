@@ -113,9 +113,9 @@ resource hwf_public 'Microsoft.App/containerApps@2023-05-01' = {
             certificateId: publicDomainCertificateId
             bindingType: 'SniEnabled'
           }
-        ]
+        ] 
 
-        ipSecurityRestrictions: [
+        ipSecurityRestrictions: env == 'prod' ? [
           {
             action: 'Allow'
             description: 'petr_home'
@@ -128,7 +128,7 @@ resource hwf_public 'Microsoft.App/containerApps@2023-05-01' = {
             ipAddressRange: '82.9.48.2/32'
             name: 'timj_home'
           }
-        ]
+        ] : null
       }
 
       registries: [
