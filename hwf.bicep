@@ -9,14 +9,24 @@ param publicSubmissionUrl string
 param dwpApiProxyUrl string
 param laaBenefitCheckerUrl string
 
-param publicDomainName string
-param publicDomainCertificateId string
+param publicDomainName string  = ''
+param publicDomainCertificateId string = ''
 
-param staffPublicDomainName string
-param staffPublicDomainCertificateId string
+param staffPublicDomainName string = ''
+param staffPublicDomainCertificateId string = ''
 
 param serviceNowEmail string
 param benefitApiPath string
+
+param notifyCompletedNewRefundTemplateId string = 'dbd72fa4-0232-4825-9460-b6f1d369b481'
+param notifyCompletedOnlineTemplateId string = 'ab017b1b-0f5a-45df-b2c5-467f97a54828'
+param notifyCompletedPaperTemplateId string = '115e4918-ce48-4bfe-8784-1b8404237d4c'
+param notifyCompletedCyNewRefundTemplateId string = 'd92e6d1d-08b6-4124-84d3-a93bfb6b4c26'
+param notifyCompletedCyOnlineTemplateId string = '61cb8166-c137-459b-b1c0-b0ca63c1da6e'
+param notifyCompletedCyPaperTemplateId string = '9f52cb39-33bd-4df6-871c-e337c058972b'
+#disable-next-line secure-secrets-in-params   // Doesn't contain a secret
+param notifyPasswordResetTemplateId string = 'fc94a9eb-99d1-47ad-a5d0-f47f16128766'
+param notifyDwpDownTemplateId string = '22025e7a-1bdd-450b-bb8f-a35f7493bd7c'
 
 var subnetId = '/subscriptions/58a2ce36-4e09-467b-8330-d164aa559c68/resourceGroups/pet_${env}_network_resource_group/providers/Microsoft.Network/virtualNetworks/pet_${env}_network/subnets/pet_dmz_${env}'
 
@@ -107,13 +117,13 @@ resource hwf_public 'Microsoft.App/containerApps@2023-05-01' = {
         external: true
         targetPort: 3000
 
-        customDomains: [
+        customDomains: publicDomainName != '' ? [
           {
             name: publicDomainName
             certificateId: publicDomainCertificateId
             bindingType: 'SniEnabled'
           }
-        ] 
+        ] : null
 
         ipSecurityRestrictions: env == 'prod' ? [
           {
@@ -347,6 +357,15 @@ module hwfStaffPublic 'hwf_staff.module.bicep' = {
 
     certificateId: staffPublicDomainCertificateId
     domainName: staffPublicDomainName
+    
+    notifyCompletedCyNewRefundTemplateId: notifyCompletedCyNewRefundTemplateId
+    notifyCompletedCyOnlineTemplateId: notifyCompletedCyOnlineTemplateId
+    notifyCompletedCyPaperTemplateId: notifyCompletedCyPaperTemplateId
+    notifyCompletedNewRefundTemplateId: notifyCompletedNewRefundTemplateId
+    notifyCompletedOnlineTemplateId: notifyCompletedOnlineTemplateId
+    notifyCompletedPaperTemplateId: notifyCompletedPaperTemplateId
+    notifyDwpDownTemplateId: notifyDwpDownTemplateId
+    notifyPasswordResetTemplateId: notifyPasswordResetTemplateId
   }
 }
 
@@ -360,6 +379,15 @@ module hwfStaffInternal 'hwf_staff.module.bicep' = {
     hwfVault: hwfVault
     dwpApiProxyUrl: dwpApiProxyUrl
     external: false
+
+    notifyCompletedCyNewRefundTemplateId: notifyCompletedCyNewRefundTemplateId
+    notifyCompletedCyOnlineTemplateId: notifyCompletedCyOnlineTemplateId
+    notifyCompletedCyPaperTemplateId: notifyCompletedCyPaperTemplateId
+    notifyCompletedNewRefundTemplateId: notifyCompletedNewRefundTemplateId
+    notifyCompletedOnlineTemplateId: notifyCompletedOnlineTemplateId
+    notifyCompletedPaperTemplateId: notifyCompletedPaperTemplateId
+    notifyDwpDownTemplateId: notifyDwpDownTemplateId
+    notifyPasswordResetTemplateId: notifyPasswordResetTemplateId
   }
 }
 

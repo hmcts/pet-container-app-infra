@@ -11,6 +11,17 @@ param external bool
 param domainName string = ''
 param certificateId string = ''
 
+param notifyCompletedNewRefundTemplateId string
+param notifyCompletedOnlineTemplateId string
+param notifyCompletedPaperTemplateId string
+param notifyCompletedCyNewRefundTemplateId string
+param notifyCompletedCyOnlineTemplateId string
+param notifyCompletedCyPaperTemplateId string
+#disable-next-line secure-secrets-in-params   // Doesn't contain a secret
+param notifyPasswordResetTemplateId string
+param notifyDwpDownTemplateId string
+
+
 resource hwf_staff 'Microsoft.App/containerApps@2023-05-01' = {
   name: 'hwf-staff-${external ? 'ext' : 'int'}-${env}'
   location: location
@@ -29,7 +40,7 @@ resource hwf_staff 'Microsoft.App/containerApps@2023-05-01' = {
         external: external
         targetPort: 3000
 
-        customDomains: external ? [
+        customDomains: external && domainName != '' ? [
             {
               name: domainName
               certificateId: certificateId
@@ -346,40 +357,56 @@ resource hwf_staff 'Microsoft.App/containerApps@2023-05-01' = {
               secretRef: 'hwf-staff-hmrc-api-url'
             }
             {
+              name: 'NOTIFY_COMPLETED_TEMPLATE_ID'
+              value: 'b30ffbe8-3769-4f8c-aac3-e8d7abeaca2a'
+            }
+            {
+              name: 'NOTIFY_COMPLETED_REFUND_TEMPLATE_ID'
+              value: '5d5dce93-a761-4f11-993e-c400f9574041'
+            }
+            {
               name: 'NOTIFY_COMPLETED_NEW_REFUND_TEMPLATE_ID'
-              value: 'dbd72fa4-0232-4825-9460-b6f1d369b481'
+              value: notifyCompletedNewRefundTemplateId
             }
             {
               name: 'NOTIFY_COMPLETED_ONLINE_TEMPLATE_ID'
-              value: 'ab017b1b-0f5a-45df-b2c5-467f97a54828'
+              value: notifyCompletedOnlineTemplateId
             }
             {
               name: 'NOTIFY_COMPLETED_PAPER_TEMPLATE_ID'
-              value: '115e4918-ce48-4bfe-8784-1b8404237d4c'
+              value: notifyCompletedPaperTemplateId
+            }
+            {
+              name: 'NOTIFY_COMPLETED_CY_TEMPLATE_ID'
+              value: '2f7559d0-1911-43d7-a3d3-c7ef41e69e6d'
+            }
+            {
+              name: 'NOTIFY_COMPLETED_CY_REFUND_TEMPLATE_ID'
+              value: '9cd53df4-08d3-4638-be03-7fc27384cf66'
             }
             {
               name: 'NOTIFY_COMPLETED_CY_NEW_REFUND_TEMPLATE_ID'
-              value: 'd92e6d1d-08b6-4124-84d3-a93bfb6b4c26'
+              value: notifyCompletedCyNewRefundTemplateId
             }
 
             {
               name: 'NOTIFY_COMPLETED_CY_ONLINE_TEMPLATE_ID'
-              value: '61cb8166-c137-459b-b1c0-b0ca63c1da6e'
+              value: notifyCompletedCyOnlineTemplateId
             }
 
             {
               name: 'NOTIFY_COMPLETED_CY_PAPER_TEMPLATE_ID'
-              value: '9f52cb39-33bd-4df6-871c-e337c058972b'
+              value: notifyCompletedCyPaperTemplateId
             }
 
             {
               name: 'NOTIFY_PASSWORD_RESET_TEMPLATE_ID'
-              value: 'fc94a9eb-99d1-47ad-a5d0-f47f16128766'
+              value: notifyPasswordResetTemplateId
             }
 
             {
               name: 'NOTIFY_DWP_DOWN_TEMPLATE_ID'
-              value: '22025e7a-1bdd-450b-bb8f-a35f7493bd7c'
+              value: notifyDwpDownTemplateId
             }
             {
               name: 'GOVUK_NOTIFY_API_KEY'
