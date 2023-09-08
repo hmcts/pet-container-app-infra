@@ -1,12 +1,39 @@
 param location string = 'uksouth'
 
-var hwfIdentity = '/subscriptions/58a2ce36-4e09-467b-8330-d164aa559c68/resourcegroups/pet-dev-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/hwf-dev'
-
-var hwfVault = 'https://f74dd7b303a6devops.vault.azure.net/secrets'
+var hwfVaultName = 'f74dd7b303a6devops'
+var hwfVault = 'https://${hwfVaultName}.vault.azure.net/secrets'
 
 param env string = 'dev'
 
-param subnetId string = '/subscriptions/58a2ce36-4e09-467b-8330-d164aa559c68/resourceGroups/pet_dev_network_resource_group/providers/Microsoft.Network/virtualNetworks/pet_dev_network/subnets/pet_dmz_dev'
+param publicSubmissionUrl string
+param dwpApiProxyUrl string
+param laaBenefitCheckerUrl string
+
+var subnetId = '/subscriptions/58a2ce36-4e09-467b-8330-d164aa559c68/resourceGroups/pet_${env}_network_resource_group/providers/Microsoft.Network/virtualNetworks/pet_${env}_network/subnets/pet_dmz_${env}'
+
+resource uami 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
+  name: 'hwf-${env}'
+  location: location
+}
+
+module keyVaultAccessPolicy 'key_vault_access_policy.module.bicep' = {
+  name: 'keyVaultDeployment'
+  scope: resourceGroup('genesis_resource_group')
+  params: {
+    vaultName: hwfVaultName
+    objectId: uami.properties.principalId
+  }
+}
+
+module acrPull 'role_assignment.module.bicep' = {
+  name: 'acrPull'
+  scope: resourceGroup('et_dev_etazure_resource_group')
+  params: {
+    principalId: uami.properties.principalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d') // AcrPull
+    roleAssignmentName: guid(subscription().id, 'hwf-${env}-acr-pull')
+  }
+}
 
 resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2020-03-01-preview' = {
   name: 'petapps-${env}'
@@ -36,7 +63,7 @@ resource environment 'Microsoft.App/managedEnvironments@2022-03-01' = {
 
     vnetConfiguration: {
       // dockerBridgeCidr: ''
-      infrastructureSubnetId: subnetId
+      infrastructureSubnetId: any(subnetId)
       // internal: false
       // platformReservedCidr: ''
       // platformReservedDnsIP: ''
@@ -60,7 +87,7 @@ resource hwf_public 'Microsoft.App/containerApps@2023-05-01' = {
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {
-      '${hwfIdentity}': {}
+      '${uami.id}': {}
     }
   }
   properties: {
@@ -74,7 +101,7 @@ resource hwf_public 'Microsoft.App/containerApps@2023-05-01' = {
 
       registries: [
         {
-          identity: hwfIdentity
+          identity: uami.id
           server: 'employmenttribunal.azurecr.io'
 
         }
@@ -83,73 +110,73 @@ resource hwf_public 'Microsoft.App/containerApps@2023-05-01' = {
       secrets: [
         {
           name: 'hwf-public-secret-token'
-          identity: hwfIdentity
-          keyVaultUrl: '${hwfVault}/dev-hwf-public-secret-token'
+          identity: uami.id
+          keyVaultUrl: '${hwfVault}/${env}-hwf-public-secret-token'
         }
         {
           name: 'hwf-public-appinsights-key'
-          identity: hwfIdentity
-          keyVaultUrl: '${hwfVault}/dev-hwf-public-appinsights-key'
+          identity: uami.id
+          keyVaultUrl: '${hwfVault}/${env}-hwf-public-appinsights-key'
         }
         {
           name: 'hwf-public-submission-token'
-          identity: hwfIdentity
-          keyVaultUrl: '${hwfVault}/dev-hwf-public-submission-token'
+          identity: uami.id
+          keyVaultUrl: '${hwfVault}/${env}-hwf-public-submission-token'
         }
         {
           name: 'hwf-public-sentry-dsn'
-          identity: hwfIdentity
-          keyVaultUrl: '${hwfVault}/dev-hwf-public-sentry-dsn'
+          identity: uami.id
+          keyVaultUrl: '${hwfVault}/${env}-hwf-public-sentry-dsn'
         }
         {
           name: 'hwf-public-zendesk-url'
-          identity: hwfIdentity
-          keyVaultUrl: '${hwfVault}/dev-hwf-public-zendesk-url'
+          identity: uami.id
+          keyVaultUrl: '${hwfVault}/${env}-hwf-public-zendesk-url'
         }
         {
           name: 'hwf-public-zendesk-username'
-          identity: hwfIdentity
-          keyVaultUrl: '${hwfVault}/dev-hwf-public-zendesk-username'
+          identity: uami.id
+          keyVaultUrl: '${hwfVault}/${env}-hwf-public-zendesk-username'
         }
         {
           name: 'hwf-public-zendesk-token'
-          identity: hwfIdentity
-          keyVaultUrl: '${hwfVault}/dev-hwf-public-zendesk-token'
+          identity: uami.id
+          keyVaultUrl: '${hwfVault}/${env}-hwf-public-zendesk-token'
         }
         {
           name: 'hwf-public-smtp-username'
-          identity: hwfIdentity
-          keyVaultUrl: '${hwfVault}/dev-hwf-public-smtp-username'
+          identity: uami.id
+          keyVaultUrl: '${hwfVault}/${env}-hwf-public-smtp-username'
         }
         {
           name: 'hwf-public-smtp-password'
-          identity: hwfIdentity
-          keyVaultUrl: '${hwfVault}/dev-hwf-public-smtp-password'
+          identity: uami.id
+          keyVaultUrl: '${hwfVault}/${env}-hwf-public-smtp-password'
         }
         {
           name: 'hwf-public-address-lookup-endpoint'
-          identity: hwfIdentity
-          keyVaultUrl: '${hwfVault}/dev-hwf-public-address-lookup-endpoint'
+          identity: uami.id
+          keyVaultUrl: '${hwfVault}/${env}-hwf-public-address-lookup-endpoint'
         }
         {
           name: 'hwf-public-address-lookup-api-key'
-          identity: hwfIdentity
-          keyVaultUrl: '${hwfVault}/dev-hwf-public-address-lookup-api-key'
+          identity: uami.id
+          keyVaultUrl: '${hwfVault}/${env}-hwf-public-address-lookup-api-key'
         }
         {
           name: 'hwf-public-address-lookup-api-secret'
-          identity: hwfIdentity
-          keyVaultUrl: '${hwfVault}/dev-hwf-public-address-lookup-api-secret'
+          identity: uami.id
+          keyVaultUrl: '${hwfVault}/${env}-hwf-public-address-lookup-api-secret'
         }
         {
           name: 'hwf-maintenance-enabled'
-          identity: hwfIdentity
-          keyVaultUrl: '${hwfVault}/dev-hwf-maintenance-enabled'
+          identity: uami.id
+          keyVaultUrl: '${hwfVault}/${env}-hwf-maintenance-enabled'
         }
         {
           name: 'hwf-maintenance-allowed-ips'
-          identity: hwfIdentity
-          keyVaultUrl: '${hwfVault}/dev-hwf-maintenance-allowed-ips'
+          identity: uami.id
+          keyVaultUrl: '${hwfVault}/${env}-hwf-maintenance-allowed-ips'
         }
       ]
     }
@@ -194,7 +221,7 @@ resource hwf_public 'Microsoft.App/containerApps@2023-05-01' = {
             }
             {
               name: 'SUBMISSION_URL'
-              value: 'https://hwf-staff-dev.nicemushroom-6841cfc0.uksouth.azurecontainerapps.io'
+              value: publicSubmissionUrl
             }
             {
               name: 'SUBMISSION_TOKEN'
@@ -262,7 +289,9 @@ resource hwf_public 'Microsoft.App/containerApps@2023-05-01' = {
 
     }
   }
-
+  dependsOn: [
+    keyVaultAccessPolicy, acrPull
+  ]
 }
 
 resource hwf_staff 'Microsoft.App/containerApps@2023-05-01' = {
@@ -272,7 +301,7 @@ resource hwf_staff 'Microsoft.App/containerApps@2023-05-01' = {
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {
-      '${hwfIdentity}': {}
+      '${uami.id}': {}
     }
   }
   properties: {
@@ -282,11 +311,26 @@ resource hwf_staff 'Microsoft.App/containerApps@2023-05-01' = {
       ingress: {
         external: true
         targetPort: 3000
+
+        ipSecurityRestrictions: [
+          {
+            action: 'Allow'
+            description: 'petr_home'
+            ipAddressRange: '88.97.40.133/32'
+            name: 'petr_home'
+          }
+          {
+            action: 'Allow'
+            description: 'tim_home'
+            ipAddressRange: '82.9.48.2/32'
+            name: 'timj_home'
+          }
+        ]
       }
 
       registries: [
         {
-          identity: hwfIdentity
+          identity: uami.id
           server: 'employmenttribunal.azurecr.io'
 
         }
@@ -295,99 +339,99 @@ resource hwf_staff 'Microsoft.App/containerApps@2023-05-01' = {
       secrets: [
         {
           name: 'hwf-staff-secret-token'
-          identity: hwfIdentity
-          keyVaultUrl: '${hwfVault}/dev-hwf-staff-secret-token'
+          identity: uami.id
+          keyVaultUrl: '${hwfVault}/${env}-hwf-staff-secret-token'
         }
         {
           name: 'hwf-staff-submission-token'
-          identity: hwfIdentity
-          keyVaultUrl: '${hwfVault}/dev-hwf-staff-submission-token'
+          identity: uami.id
+          keyVaultUrl: '${hwfVault}/${env}-hwf-staff-submission-token'
         }
         {
           name: 'hwf-staff-appinsights-key'
-          identity: hwfIdentity
-          keyVaultUrl: '${hwfVault}/dev-hwf-staff-appinsights-key'
+          identity: uami.id
+          keyVaultUrl: '${hwfVault}/${env}-hwf-staff-appinsights-key'
         }
         {
           name: 'hwf-staff-sentry-dsn'
-          identity: hwfIdentity
-          keyVaultUrl: '${hwfVault}/dev-hwf-staff-sentry-dsn'
+          identity: uami.id
+          keyVaultUrl: '${hwfVault}/${env}-hwf-staff-sentry-dsn'
         }
         {
           name: 'hwf-staff-db-password'
-          identity: hwfIdentity
-          keyVaultUrl: '${hwfVault}/dev-hwf-staff-db-password'
+          identity: uami.id
+          keyVaultUrl: '${hwfVault}/${env}-hwf-staff-db-password'
         }
         {
           name: 'hwf-staff-db-host'
-          identity: hwfIdentity
-          keyVaultUrl: '${hwfVault}/dev-hwf-staff-db-host'
+          identity: uami.id
+          keyVaultUrl: '${hwfVault}/${env}-hwf-staff-db-host'
         }
         {
           name: 'hwf-staff-db-name'
-          identity: hwfIdentity
-          keyVaultUrl: '${hwfVault}/dev-hwf-staff-db-name'
+          identity: uami.id
+          keyVaultUrl: '${hwfVault}/${env}-hwf-staff-db-name'
         }
         {
           name: 'hwf-staff-db-user-name'
-          identity: hwfIdentity
-          keyVaultUrl: '${hwfVault}/dev-hwf-staff-db-user-name'
+          identity: uami.id
+          keyVaultUrl: '${hwfVault}/${env}-hwf-staff-db-user-name'
         }
         {
           name: 'hwf-staff-smtp-username'
-          identity: hwfIdentity
-          keyVaultUrl: '${hwfVault}/dev-hwf-staff-smtp-username'
+          identity: uami.id
+          keyVaultUrl: '${hwfVault}/${env}-hwf-staff-smtp-username'
         }
         {
           name: 'hwf-staff-smtp-password'
-          identity: hwfIdentity
-          keyVaultUrl: '${hwfVault}/dev-hwf-staff-smtp-password'
+          identity: uami.id
+          keyVaultUrl: '${hwfVault}/${env}-hwf-staff-smtp-password'
         }
         {
           name: 'hwf-staff-dwp-notification-alert-emails'
-          identity: hwfIdentity
-          keyVaultUrl: '${hwfVault}/dev-hwf-staff-dwp-notification-alert-emails'
+          identity: uami.id
+          keyVaultUrl: '${hwfVault}/${env}-hwf-staff-dwp-notification-alert-emails'
         }
         {
           name: 'hwf-staff-hmrc-ttp-secret'
-          identity: hwfIdentity
-          keyVaultUrl: '${hwfVault}/dev-hwf-staff-hmrc-ttp-secret'
+          identity: uami.id
+          keyVaultUrl: '${hwfVault}/${env}-hwf-staff-hmrc-ttp-secret'
         }
         {
           name: 'hwf-staff-hmrc-client-id'
-          identity: hwfIdentity
-          keyVaultUrl: '${hwfVault}/dev-hwf-staff-hmrc-client-id'
+          identity: uami.id
+          keyVaultUrl: '${hwfVault}/${env}-hwf-staff-hmrc-client-id'
         }
         {
           name: 'hwf-staff-hmrc-secret'
-          identity: hwfIdentity
-          keyVaultUrl: '${hwfVault}/dev-hwf-staff-hmrc-secret'
+          identity: uami.id
+          keyVaultUrl: '${hwfVault}/${env}-hwf-staff-hmrc-secret'
         }
         {
           name: 'hwf-staff-hmrc-api-url'
-          identity: hwfIdentity
-          keyVaultUrl: '${hwfVault}/dev-hwf-staff-hmrc-api-url'
+          identity: uami.id
+          keyVaultUrl: '${hwfVault}/${env}-hwf-staff-hmrc-api-url'
         }
         {
           name: 'hwf-staff-notify-api-key'
-          identity: hwfIdentity
-          keyVaultUrl: '${hwfVault}/dev-hwf-staff-notify-api-key'
+          identity: uami.id
+          keyVaultUrl: '${hwfVault}/${env}-hwf-staff-notify-api-key'
         }
 
         {
           name: 'hwf-staff-hmrc-office-code'
-          identity: hwfIdentity
-          keyVaultUrl: '${hwfVault}/dev-hwf-staff-hmrc-office-code'
+          identity: uami.id
+          keyVaultUrl: '${hwfVault}/${env}-hwf-staff-hmrc-office-code'
         }
         {
           name: 'hwf-maintenance-enabled'
-          identity: hwfIdentity
-          keyVaultUrl: '${hwfVault}/dev-hwf-maintenance-enabled'
+          identity: uami.id
+          keyVaultUrl: '${hwfVault}/${env}-hwf-maintenance-enabled'
         }
         {
           name: 'hwf-maintenance-allowed-ips'
-          identity: hwfIdentity
-          keyVaultUrl: '${hwfVault}/dev-hwf-maintenance-allowed-ips'
+          identity: uami.id
+          keyVaultUrl: '${hwfVault}/${env}-hwf-maintenance-allowed-ips'
         }
       ]
     }
@@ -497,7 +541,7 @@ resource hwf_staff 'Microsoft.App/containerApps@2023-05-01' = {
             }
             {
               name: 'DWP_API_PROXY'
-              value: 'https://hwf-benefit-checker-api-dev.nicemushroom-6841cfc0.uksouth.azurecontainerapps.io'
+              value: dwpApiProxyUrl
             }
             {
               name: 'DWP_NOTIFICATION_ALERT_EMAILS'
@@ -587,6 +631,10 @@ resource hwf_staff 'Microsoft.App/containerApps@2023-05-01' = {
     }
   }
 
+  dependsOn: [
+    keyVaultAccessPolicy, acrPull
+  ]
+
 }
 
 resource hwf_laa_benefit_checker 'Microsoft.App/containerApps@2023-05-01' = {
@@ -596,7 +644,7 @@ resource hwf_laa_benefit_checker 'Microsoft.App/containerApps@2023-05-01' = {
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {
-      '${hwfIdentity}': {}
+      '${uami.id}': {}
     }
   }
   properties: {
@@ -610,7 +658,7 @@ resource hwf_laa_benefit_checker 'Microsoft.App/containerApps@2023-05-01' = {
 
       registries: [
         {
-          identity: hwfIdentity
+          identity: uami.id
           server: 'employmenttribunal.azurecr.io'
 
         }
@@ -636,6 +684,8 @@ resource hwf_laa_benefit_checker 'Microsoft.App/containerApps@2023-05-01' = {
     }
   }
 
+  dependsOn: [ acrPull ]
+
 }
 
 resource hwf_benefit_checker_api 'Microsoft.App/containerApps@2023-05-01' = {
@@ -645,7 +695,7 @@ resource hwf_benefit_checker_api 'Microsoft.App/containerApps@2023-05-01' = {
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {
-      '${hwfIdentity}': {}
+      '${uami.id}': {}
     }
   }
   properties: {
@@ -659,7 +709,7 @@ resource hwf_benefit_checker_api 'Microsoft.App/containerApps@2023-05-01' = {
 
       registries: [
         {
-          identity: hwfIdentity
+          identity: uami.id
           server: 'employmenttribunal.azurecr.io'
 
         }
@@ -668,23 +718,23 @@ resource hwf_benefit_checker_api 'Microsoft.App/containerApps@2023-05-01' = {
       secrets: [
         {
           name: 'hwf-benefit-checker-api-api-org-id'
-          identity: hwfIdentity
-          keyVaultUrl: '${hwfVault}/dev-hwf-benefit-checker-api-api-org-id'
+          identity: uami.id
+          keyVaultUrl: '${hwfVault}/${env}-hwf-benefit-checker-api-api-org-id'
         }
         {
           name: 'hwf-benefit-checker-api-api-user-id'
-          identity: hwfIdentity
-          keyVaultUrl: '${hwfVault}/dev-hwf-benefit-checker-api-api-user-id'
+          identity: uami.id
+          keyVaultUrl: '${hwfVault}/${env}-hwf-benefit-checker-api-api-user-id'
         }
         {
           name: 'hwf-benefit-checker-api-api-service-name'
-          identity: hwfIdentity
-          keyVaultUrl: '${hwfVault}/dev-hwf-benefit-checker-api-api-service-name'
+          identity: uami.id
+          keyVaultUrl: '${hwfVault}/${env}-hwf-benefit-checker-api-api-service-name'
         }
         {
           name: 'hwf-public-appinsights-key'
-          identity: hwfIdentity
-          keyVaultUrl: '${hwfVault}/dev-hwf-public-appinsights-key'
+          identity: uami.id
+          keyVaultUrl: '${hwfVault}/${env}-hwf-public-appinsights-key'
         }
       ]
     }
@@ -721,7 +771,7 @@ resource hwf_benefit_checker_api 'Microsoft.App/containerApps@2023-05-01' = {
             }
             {
               name: 'API_HOST'
-              value: 'https://hwf-laa-benefit-checker-dev.nicemushroom-6841cfc0.uksouth.azurecontainerapps.io'
+              value: laaBenefitCheckerUrl
             }
             {
               name: 'API_PATH'
@@ -753,5 +803,9 @@ resource hwf_benefit_checker_api 'Microsoft.App/containerApps@2023-05-01' = {
 
     }
   }
+
+  dependsOn: [
+    keyVaultAccessPolicy, acrPull
+  ]
 
 }
