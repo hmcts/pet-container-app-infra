@@ -9,6 +9,12 @@ param publicSubmissionUrl string
 param dwpApiProxyUrl string
 param laaBenefitCheckerUrl string
 
+param publicDomainName string
+param publicDomainCertificateId string
+
+param staffPublicDomainName string
+param staffPublicDomainCertificateId string
+
 param serviceNowEmail string
 param benefitApiPath string
 
@@ -100,6 +106,14 @@ resource hwf_public 'Microsoft.App/containerApps@2023-05-01' = {
       ingress: {
         external: true
         targetPort: 3000
+
+        customDomains: [
+          {
+            name: publicDomainName
+            certificateId: publicDomainCertificateId
+            bindingType: 'SniEnabled'
+          }
+        ]
 
         ipSecurityRestrictions: [
           {
@@ -330,6 +344,9 @@ module hwfStaffPublic 'hwf_staff.module.bicep' = {
     hwfVault: hwfVault
     dwpApiProxyUrl: dwpApiProxyUrl
     external: true
+
+    certificateId: staffPublicDomainCertificateId
+    domainName: staffPublicDomainName
   }
 }
 

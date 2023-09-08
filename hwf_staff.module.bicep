@@ -8,6 +8,9 @@ param dwpApiProxyUrl string
 
 param external bool
 
+param domainName string = ''
+param certificateId string = ''
+
 resource hwf_staff 'Microsoft.App/containerApps@2023-05-01' = {
   name: 'hwf-staff-${external ? 'ext' : 'int'}-${env}'
   location: location
@@ -25,6 +28,14 @@ resource hwf_staff 'Microsoft.App/containerApps@2023-05-01' = {
       ingress: {
         external: external
         targetPort: 3000
+
+        customDomains: external ? [
+            {
+              name: domainName
+              certificateId: certificateId
+              bindingType: 'SniEnabled'
+            }
+        ] : null
 
         ipSecurityRestrictions: external ? [
           {
