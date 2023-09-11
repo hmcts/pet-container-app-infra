@@ -15,3 +15,9 @@ param notifyCompletedCyOnlineTemplateId = '6c933b40-6664-4a70-8ad0-51b50f1aedd6'
 param notifyCompletedCyPaperTemplateId = '1282277c-525b-4fb1-9a23-bab55fc1e082'
 param notifyPasswordResetTemplateId = '6a1290da-2731-4949-b58a-f5e3e469473d'
 param notifyDwpDownTemplateId = '12729281-2e10-426b-8601-24732d801e3b'
+
+param staffPublicDomainCertificateId = '/subscriptions/58a2ce36-4e09-467b-8330-d164aa559c68/resourceGroups/pet-prod-rg/providers/Microsoft.App/managedEnvironments/petapps-prod/managedCertificates/mc-petapps-prod-staff-helpwithco-4940'
+param staffPublicDomainName = 'staff.helpwithcourtfees.service.gov.uk'
+
+param publicDomainCertificateId = '/subscriptions/58a2ce36-4e09-467b-8330-d164aa559c68/resourceGroups/pet-prod-rg/providers/Microsoft.App/managedEnvironments/petapps-prod/managedCertificates/mc-petapps-prod-helpwithcourtfee-3471'
+param publicDomainName = 'helpwithcourtfees.service.gov.uk'

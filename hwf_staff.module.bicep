@@ -40,7 +40,7 @@ resource hwf_staff 'Microsoft.App/containerApps@2023-05-01' = {
         external: external
         targetPort: 3000
 
-        customDomains: external && domainName != '' ? [
+        customDomains: external ? [
             {
               name: domainName
               certificateId: certificateId
@@ -429,8 +429,8 @@ resource hwf_staff 'Microsoft.App/containerApps@2023-05-01' = {
         }
       ]
       scale: {
-        minReplicas: 1
-        maxReplicas: 1
+        minReplicas: 2
+        maxReplicas: 4
       }
 
     }

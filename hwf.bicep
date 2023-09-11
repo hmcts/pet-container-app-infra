@@ -9,11 +9,11 @@ param publicSubmissionUrl string
 param dwpApiProxyUrl string
 param laaBenefitCheckerUrl string
 
-param publicDomainName string  = ''
-param publicDomainCertificateId string = ''
+param publicDomainName string
+param publicDomainCertificateId string
 
-param staffPublicDomainName string = ''
-param staffPublicDomainCertificateId string = ''
+param staffPublicDomainName string
+param staffPublicDomainCertificateId string
 
 param serviceNowEmail string
 param benefitApiPath string
@@ -117,28 +117,13 @@ resource hwf_public 'Microsoft.App/containerApps@2023-05-01' = {
         external: true
         targetPort: 3000
 
-        customDomains: publicDomainName != '' ? [
+        customDomains: [
           {
             name: publicDomainName
             certificateId: publicDomainCertificateId
             bindingType: 'SniEnabled'
           }
-        ] : null
-
-        ipSecurityRestrictions: env == 'prod' ? [
-          {
-            action: 'Allow'
-            description: 'petr_home'
-            ipAddressRange: '88.97.40.133/32'
-            name: 'petr_home'
-          }
-          {
-            action: 'Allow'
-            description: 'tim_home'
-            ipAddressRange: '82.9.48.2/32'
-            name: 'timj_home'
-          }
-        ] : null
+        ]
       }
 
       registries: [
@@ -333,8 +318,8 @@ resource hwf_public 'Microsoft.App/containerApps@2023-05-01' = {
         }
       ]
       scale: {
-        minReplicas: 1
-        maxReplicas: 1
+        minReplicas: 2
+        maxReplicas: 4
       }
 
     }
@@ -500,8 +485,8 @@ resource hwf_benefit_checker_api 'Microsoft.App/containerApps@2023-05-01' = {
         }
       ]
       scale: {
-        minReplicas: 1
-        maxReplicas: 1
+        minReplicas: 2
+        maxReplicas: 4
       }
 
     }
