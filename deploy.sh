@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
-ENV=$1
 
-az deployment group create --resource-group pet-$ENV-rg --template-file hwf.bicep --parameters $ENV/hwf.bicepparam
+#usage ./deploy.sh hwf dev
+
+PRODUCT=$1
+ENV=$2
+
+az deployment group create --resource-group pet-$ENV-rg --template-file $PRODUCT.bicep --parameters $ENV/$PRODUCT.bicepparam
