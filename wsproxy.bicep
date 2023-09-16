@@ -3,12 +3,15 @@ param location string = 'uksouth'
 var wsproxyVaultName = 'f74dd7b303a6devops'
 var wsproxyVault = 'https://${wsproxyVaultName}.vault.azure.net/secrets'
 
+param publicDomainName string
+param publicDomainCertificateId string
+
 param env string = 'dev'
 
 var subnetId = '/subscriptions/58a2ce36-4e09-467b-8330-d164aa559c68/resourceGroups/pet_${env}_network_resource_group/providers/Microsoft.Network/virtualNetworks/pet_${env}_network/subnets/pet_dmz_${env}'
 
 resource uami 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
-  name: wsproxy-${env}'
+  name: 'wsproxy-${env}'
   location: location
 }
 
