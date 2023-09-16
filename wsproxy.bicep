@@ -19,7 +19,7 @@ module keyVaultAccessPolicy 'key_vault_access_policy.module.bicep' = {
   name: 'keyVaultDeployment'
   scope: resourceGroup('genesis_resource_group')
   params: {
-    vaultName: wsproxy
+    vaultName: wsproxyVaultName
     objectId: uami.properties.principalId
   }
 }
