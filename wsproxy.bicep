@@ -24,57 +24,15 @@ module keyVaultAccessPolicy 'key_vault_access_policy.module.bicep' = {
   }
 }
 
-module acrPull 'role_assignment.module.bicep' = {
-  name: 'acrPull'
-  scope: resourceGroup('et_dev_etazure_resource_group')
-  params: {
-    principalId: uami.properties.principalId
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d') // AcrPull
-    roleAssignmentName: guid(subscription().id, 'wsproxy-${env}-acr-pull')
-  }
-}
+@description('The number of CPU cores to allocate to the container.')
+param cpuCores int = 1
 
-resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2020-03-01-preview' = {
-  name: 'petapps-${env}'
-  location: location
-  properties: any({
-    retentionInDays: 30
-    features: {
-      searchVersion: 1
-    }
-    sku: {
-      name: 'PerGB2018'
-    }
-  })
-}
+@description('The amount of memory to allocate to the container in gigabytes.')
+param memoryInGb int = 2
 
-resource environment 'Microsoft.App/managedEnvironments@2022-03-01' = {
+resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2023-05-01' = {
   name: 'wsproxy-${env}'
   location: location
-  properties: {
-    appLogsConfiguration: {
-      destination: 'log-analytics'
-      logAnalyticsConfiguration: {
-        customerId: reference(logAnalyticsWorkspace.id, '2020-03-01-preview').customerId
-        sharedKey: listKeys(logAnalyticsWorkspace.id, '2020-03-01-preview').primarySharedKey
-      }
-    }
-
-    workloadProfiles: [
-      {
-        maximumCount: 10
-        minimumCount: 1
-        name: 'pet-apps'
-        workloadProfileType: 'D4'
-      }
-    ]
-  }
-}
-
-resource wsproxy 'Microsoft.App/containerApps@2023-05-01' = {
-  name: 'wsproxy2-${env}'
-  location: location
-
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {
@@ -82,75 +40,50 @@ resource wsproxy 'Microsoft.App/containerApps@2023-05-01' = {
     }
   }
   properties: {
-    managedEnvironmentId: environment.id
-
-    configuration: {
-      ingress: {
-        external: true
-        targetPort: 4430
-        // customDomains: [
-        //   {
-        //     name: publicDomainName
-        //     certificateId: publicDomainCertificateId
-        //     bindingType: 'SniEnabled'
-        //   }
-        // ]
+    imageRegistryCredentials: [
+      {
+        server: 'employmenttribunal.azurecr.io'
+        identity: uami.id
       }
-
-      registries: [
-        {
-          identity: uami.id
-          server: 'employmenttribunal.azurecr.io'
-
-        }
-      ]
-
-      secrets: [
-        {
-          name: 'test'
-          identity: uami.id
-          keyVaultUrl: '${wsproxyVault}/${env}-test'
-        }
-      ]
-    }
-
-    template: {
-      containers: [
-        {
-          image: 'employmenttribunal.azurecr.io/tt-wsproxy:latest'
-          name: 'wsproxy'
+    ]
+    containers: [
+      {
+        name: 'wsproxy'
+        properties: {
+          image: 'employmenttribunal.azurecr.io/tt-wsproxy:tactical-dev'
+          ports: [
+            {
+              port: 8080
+              protocol: 'TCP'
+            }
+            {
+              port: 4430
+              protocol: 'TCP'
+            }
+          ]
           resources: {
-            cpu: 1
-            memory: '2.0Gi'
+            requests: {
+              cpu: cpuCores
+              memoryInGB: memoryInGb
+            }
           }
-          env: [
-            {
-              name: 'TEST'
-              value: 'TEST'
-            }
-          ]
-          volumeMounts: [
-            {
-              mountPath: '/opt/keystore'
-              volumeName: 'wsproxy'
-            }
-          ]
         }
-      ]
-      scale: {
-        minReplicas: 1
-        maxReplicas: 1
       }
-      volumes: [
+    ]
+    osType: 'Linux'
+    restartPolicy: 'Always'
+    ipAddress: {
+      type: 'Public'
+      ports: [
         {
-          name: 'wsproxy'
-          storageType: 'AzureFile'
-          storageName: 'wsproxy'
+          port: 8080
+          protocol: 'TCP'
+        }
+        {
+          port: 4430
+          protocol: 'TCP'
         }
       ]
     }
   }
-  dependsOn: [
-    keyVaultAccessPolicy, acrPull
-  ]
 }
