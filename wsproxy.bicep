@@ -1,13 +1,5 @@
 param location string = 'uksouth'
 
-var wsproxyVaultName = 'f74dd7b303a6devops'
-var wsproxyVault = 'https://${wsproxyVaultName}.vault.azure.net/secrets'
-
-var wsproxyStorageAccountName = 'wsproxy-${env}'
-
-param publicDomainName string
-param publicDomainCertificateId string
-
 param env string = 'dev'
 
 resource uami 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
@@ -15,12 +7,13 @@ resource uami 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
   location: location
 }
 
-module keyVaultAccessPolicy 'key_vault_access_policy.module.bicep' = {
-  name: 'keyVaultDeployment'
-  scope: resourceGroup('genesis_resource_group')
+module acrPull 'role_assignment.module.bicep' = {
+  name: 'acrPull'
+  scope: resourceGroup('et_dev_etazure_resource_group')
   params: {
-    vaultName: wsproxyVaultName
-    objectId: uami.properties.principalId
+    principalId: uami.properties.principalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d') // AcrPull
+    roleAssignmentName: guid(subscription().id, 'wsproxy-${env}-acr-pull')
   }
 }
 
@@ -33,6 +26,9 @@ param memoryInGb int = 2
 resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2023-05-01' = {
   name: 'wsproxy-${env}'
   location: location
+
+  dependsOn: [acrPull]
+
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {
@@ -50,14 +46,14 @@ resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2023-05-01'
       {
         name: 'wsproxy'
         properties: {
-          image: 'employmenttribunal.azurecr.io/tt-wsproxy:tactical-dev'
+          image: 'employmenttribunal.azurecr.io/tt-wsproxy:tactical-dev443'
           ports: [
             {
               port: 8080
               protocol: 'TCP'
             }
             {
-              port: 4430
+              port: 443
               protocol: 'TCP'
             }
           ]
@@ -80,7 +76,7 @@ resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2023-05-01'
           protocol: 'TCP'
         }
         {
-          port: 4430
+          port: 443
           protocol: 'TCP'
         }
       ]
