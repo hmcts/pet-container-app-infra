@@ -26,14 +26,14 @@ module keyVaultAccessPolicy 'key_vault_access_policy.module.bicep' = {
   }
 }
 
-module StorageAccount 'storage_account.module.bicep' = {
-  name: 'StorageAccountDeployment'
-  scope: resourceGroup('pet-dev-rg')
-  params: {
-    name: wsproxyStorageAccountName
-    objectId: uami.properties.principalId
-  }
-}
+#module StorageAccount 'storage_account.module.bicep' = {
+#  name: 'StorageAccountDeployment'
+#  scope: resourceGroup('pet-dev-rg')
+#  params: {
+#    name: wsproxyStorageAccountName
+#    objectId: uami.properties.principalId
+#  }
+#}
 
 module acrPull 'role_assignment.module.bicep' = {
   name: 'acrPull'
@@ -106,8 +106,14 @@ resource wsproxy 'Microsoft.App/containerApps@2023-05-01' = {
     configuration: {
       ingress: {
         external: true
-        targetPort: 443
-
+        targetPort: 8080
+        additionalPortMappings: [
+          {
+            exposedPort: 443
+            external: false
+            targetPort: 4430
+          }
+        ]
         customDomains: [
           {
             name: publicDomainName
