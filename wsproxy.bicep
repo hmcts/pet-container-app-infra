@@ -139,13 +139,25 @@ resource wsproxy 'Microsoft.App/containerApps@2023-05-01' = {
               value: 'TEST'
             }
           ]
+          volumeMounts: [
+            {
+              mountPath: '/opt/tomcat/keystore'
+              volumeName: 'wsproxy'
+            }
+          ]
         }
       ]
       scale: {
         minReplicas: 1
         maxReplicas: 1
       }
-
+      volumes: [
+        {
+          name: 'wsproxy'
+          storageType: 'AzureFile'
+          storageName: 'wsproxy-dev'
+        }
+      ]
     }
   }
   dependsOn: [
