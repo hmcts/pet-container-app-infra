@@ -1,0 +1,45 @@
+location: uksouth
+name: wsproxy2-dev
+resourceGroup: pet-dev-rg
+type: Microsoft.App/containerApps
+tags:
+  tagname: value
+properties:
+  managedEnvironmentId: /subscriptions/58a2ce36-4e09-467b-8330-d164aa559c68/resourceGroups/pet-dev-rg/providers/Microsoft.App/managedEnvironments/petapps-dev
+  configuration:
+    activeRevisionsMode: Single
+    secrets:
+      - name: mysecret
+        value: thisismysecret
+      - name: myregistrypassword
+        value: hi-tim
+    ingress:
+      additionalPortMappings:
+      - exposedPort: 8080
+        external: true
+        targetPort: 8080
+      targetPort: 4430
+      external: true
+      allowInsecure: false
+      traffic:
+        - latestRevision: true
+          weight: 100
+      transport: Auto
+    registries:
+      - passwordSecretRef: myregistrypassword
+        server: employmenttribunal.azurecr.io
+        username: employmenttribunal
+  template:
+    revisionSuffix: myrevision2
+    containers:
+      - image: employmenttribunal.azurecr.io/tt-wsproxy:tactical-dev
+        name: wsproxy
+        env:
+          - name: secret_name
+            secretRef: mysecret
+        resources:
+          cpu: 1
+          memory: 2Gi
+    scale:
+      minReplicas: 1
+      maxReplicas: 1
