@@ -3,6 +3,8 @@ param location string = 'uksouth'
 var wsproxyVaultName = 'f74dd7b303a6devops'
 var wsproxyVault = 'https://${wsproxyVaultName}.vault.azure.net/secrets'
 
+var wsproxyStorageAccountName = 'wsproxy-${env}'
+
 param publicDomainName string
 param publicDomainCertificateId string
 
@@ -20,6 +22,15 @@ module keyVaultAccessPolicy 'key_vault_access_policy.module.bicep' = {
   scope: resourceGroup('genesis_resource_group')
   params: {
     vaultName: wsproxyVaultName
+    objectId: uami.properties.principalId
+  }
+}
+
+module StorageAccount 'storage_account.module.bicep' = {
+  name: 'StorageAccountDeployment'
+  scope: resourceGroup('pet-dev-rg')
+  params: {
+    name: wsproxyStorageAccountName
     objectId: uami.properties.principalId
   }
 }
