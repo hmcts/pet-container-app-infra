@@ -97,14 +97,7 @@ resource wsproxy 'Microsoft.App/containerApps@2023-05-01' = {
     configuration: {
       ingress: {
         external: true
-        targetPort: 8080
-        additionalPortMappings: [
-          {
-            exposedPort: 443
-            external: false
-            targetPort: 4430
-          }
-        ]
+        targetPort: 4430
         customDomains: [
           {
             name: publicDomainName
