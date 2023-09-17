@@ -26,14 +26,14 @@ module keyVaultAccessPolicy 'key_vault_access_policy.module.bicep' = {
   }
 }
 
-#module StorageAccount 'storage_account.module.bicep' = {
-#  name: 'StorageAccountDeployment'
-#  scope: resourceGroup('pet-dev-rg')
-#  params: {
-#    name: wsproxyStorageAccountName
-#    objectId: uami.properties.principalId
-#  }
-#}
+//#module StorageAccount 'storage_account.module.bicep' = {
+//#  name: 'StorageAccountDeployment'
+//#  scope: resourceGroup('pet-dev-rg')
+//#  params: {
+//#    name: wsproxyStorageAccountName
+//#    objectId: uami.properties.principalId
+//#  }
+//#}
 
 module acrPull 'role_assignment.module.bicep' = {
   name: 'acrPull'
