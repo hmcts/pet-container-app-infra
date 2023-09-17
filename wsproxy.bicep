@@ -10,8 +10,6 @@ param publicDomainCertificateId string
 
 param env string = 'dev'
 
-var subnetId = '/subscriptions/58a2ce36-4e09-467b-8330-d164aa559c68/resourceGroups/pet_${env}_network_resource_group/providers/Microsoft.Network/virtualNetworks/pet_${env}_network/subnets/pet_dmz_${env}'
-
 resource uami 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
   name: 'wsproxy-${env}'
   location: location
@@ -51,7 +49,7 @@ resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2020-03
 }
 
 resource environment 'Microsoft.App/managedEnvironments@2022-03-01' = {
-  name: 'petapps-${env}'
+  name: 'wsproxy-${env}'
   location: location
   properties: {
     appLogsConfiguration: {
@@ -60,14 +58,6 @@ resource environment 'Microsoft.App/managedEnvironments@2022-03-01' = {
         customerId: reference(logAnalyticsWorkspace.id, '2020-03-01-preview').customerId
         sharedKey: listKeys(logAnalyticsWorkspace.id, '2020-03-01-preview').primarySharedKey
       }
-    }
-
-    vnetConfiguration: {
-      // dockerBridgeCidr: ''
-      infrastructureSubnetId: any(subnetId)
-      // internal: false
-      // platformReservedCidr: ''
-      // platformReservedDnsIP: ''
     }
 
     workloadProfiles: [
@@ -82,7 +72,7 @@ resource environment 'Microsoft.App/managedEnvironments@2022-03-01' = {
 }
 
 resource wsproxy 'Microsoft.App/containerApps@2023-05-01' = {
-  name: 'wsproxy-${env}'
+  name: 'wsproxy2-${env}'
   location: location
 
   identity: {
@@ -98,13 +88,13 @@ resource wsproxy 'Microsoft.App/containerApps@2023-05-01' = {
       ingress: {
         external: true
         targetPort: 4430
-        customDomains: [
-          {
-            name: publicDomainName
-            certificateId: publicDomainCertificateId
-            bindingType: 'SniEnabled'
-          }
-        ]
+        // customDomains: [
+        //   {
+        //     name: publicDomainName
+        //     certificateId: publicDomainCertificateId
+        //     bindingType: 'SniEnabled'
+        //   }
+        // ]
       }
 
       registries: [
@@ -141,7 +131,7 @@ resource wsproxy 'Microsoft.App/containerApps@2023-05-01' = {
           ]
           volumeMounts: [
             {
-              mountPath: '/opt/tomcat/keystore'
+              mountPath: '/opt/keystore'
               volumeName: 'wsproxy'
             }
           ]
@@ -155,7 +145,7 @@ resource wsproxy 'Microsoft.App/containerApps@2023-05-01' = {
         {
           name: 'wsproxy'
           storageType: 'AzureFile'
-          storageName: 'wsproxy-dev'
+          storageName: 'wsproxy'
         }
       ]
     }
