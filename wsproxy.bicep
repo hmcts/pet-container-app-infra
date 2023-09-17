@@ -129,7 +129,7 @@ resource wsproxy 'Microsoft.App/containerApps@2023-05-01' = {
           image: 'employmenttribunal.azurecr.io/tt-wsproxy:latest'
           name: 'wsproxy'
           resources: {
-            cpu: '1'
+            cpu: 1
             memory: '2.0Gi'
           }
           env: [
