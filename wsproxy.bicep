@@ -72,10 +72,6 @@ resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2023-05-01'
       type: 'Public'
       ports: [
         {
-          port: 8080
-          protocol: 'TCP'
-        }
-        {
           port: 443
           protocol: 'TCP'
         }
