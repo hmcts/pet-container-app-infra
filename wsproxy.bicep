@@ -49,10 +49,6 @@ resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2023-05-01'
           image: 'employmenttribunal.azurecr.io/tt-wsproxy:tactical-dev-hardened10'
           ports: [
             {
-              port: 8080
-              protocol: 'TCP'
-            }
-            {
               port: 443
               protocol: 'TCP'
             }
