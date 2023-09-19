@@ -46,7 +46,7 @@ resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2023-05-01'
       {
         name: 'wsproxy'
         properties: {
-          image: 'employmenttribunal.azurecr.io/tt-wsproxy:tactical-dev-hardened'
+          image: 'employmenttribunal.azurecr.io/tt-wsproxy:tactical-dev-hardened10'
           ports: [
             {
               port: 8080
