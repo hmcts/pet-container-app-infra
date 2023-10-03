@@ -46,8 +46,12 @@ resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2023-05-01'
       {
         name: 'wsproxy'
         properties: {
-          image: 'employmenttribunal.azurecr.io/tt-wsproxy:tactical-dev-hardened10'
+          image: 'employmenttribunal.azurecr.io/tt-wsproxy:prod-05fdd2f5-1695807236'
           ports: [
+            {
+              port: 8080
+              protocol: 'TCP'
+            }
             {
               port: 443
               protocol: 'TCP'
@@ -67,6 +71,10 @@ resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2023-05-01'
     ipAddress: {
       type: 'Public'
       ports: [
+        {
+          port: 8080
+          protocol: 'TCP'
+        }
         {
           port: 443
           protocol: 'TCP'
